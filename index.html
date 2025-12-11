@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser Fingerprinting Demo - Educational</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px;
+            border-radius: 4px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .section-header {
+            background: #f5f5f5;
+            padding: 15px 20px;
+            font-weight: bold;
+            color: #333;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .section-content {
+            padding: 20px;
+        }
+        
+        .fingerprint-item {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 15px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .fingerprint-item:last-child {
+            border-bottom: none;
+        }
+        
+        .label {
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .value {
+            color: #333;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .hash-display {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .hash-value {
+            font-family: 'Courier New', monospace;
+            font-size: 1.2em;
+            color: #667eea;
+            font-weight: bold;
+            word-break: break-all;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .badge-stable {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-varies {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .badge-unique {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 10px 5px;
+            transition: transform 0.2s;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+        }
+        
+        canvas {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Browser Fingerprinting Demo</h1>
+            <p>Educational Project - Understanding Browser Identification</p>
+        </div>
+        
+        <div class="warning">
+            <strong>⚠️ Educational Purpose:</strong> This demo shows various browser fingerprinting techniques. 
+            Understanding these methods is important for privacy awareness and security research.
+            <br><br>
+            <strong>Legend:</strong>
+            <span class="badge badge-stable">STABLE</span> Same across locations/sessions
+            <span class="badge badge-varies">VARIES</span> Changes by location/network
+            <span class="badge badge-unique">UNIQUE</span> Highly identifying per user
+        </div>
+        
+        <div class="content">
+            <div class="hash-display">
+                <div style="margin-bottom: 10px; font-weight: bold;">Unique Browser Fingerprint Hash:</div>
+                <div class="hash-value" id="fingerprintHash">Calculating...</div>
+            </div>
+            
+            <div class="section">
+                <div class="section-header">Basic Browser Information</div>
+                <div class="section-content" id="basicInfo"></div>
+            </div>
+            
+            <div class="section">
+                <div class="section-header">Screen & Display Properties</div>
+                <div class="section-content" id="screenInfo"></div>
+            </div>
+            
+            <div class="section">
+                <div class="section-header">Hardware & System</div>
+                <div class="section-content" id="hardwareInfo"></div>
+            </div>
+            
+            <div class="section">
+                <div class="section-header">Network & Connection</div>
+                <div class="section-content" id="networkInfo"></div>
+            </div>
+            
+            <div class="section">
+                <div class="section-header">Location & Geographic Data</div>
+                <div class="section-content" id="locationInfo"></div>
+            </div>
+            
+            <div class="section">
+                <div class="section-header">Audio & Media Fingerprinting</div>
+                <div class="section-content" id="audioInfo"></div>
+            </div>
+            
+            <div class="section">
+                <div class="section-header">Battery & Sensors</div>
+                <div class="section-content" id="batteryInfo"></div>
+            </div>
+            
+            <div class="section">
+                <div class="section-header">Browser Features & APIs</div>
+                <div class="section-content" id="featuresInfo"></div>
+            </div>
+            
+            <div class="section">
+                <div class="section-header">WebRTC & IP Detection</div>
+                <div class="section-content" id="webrtcInfo"></div>
+            </div>
+            
+            <div class="section">
+                <div class="section-header">Client Hints & HTTP Headers</div>
+                <div class="section-content" id="clientHintsInfo"></div>
+            </div>
+            
+            <div class="section">
+                <div class="section-header">Performance & Timing</div>
+                <div class="section-content" id="performanceInfo"></div>
+            </div>
+            
+            <div class="section">
+                <div class="section-header">Storage & Quota Detection</div>
+                <div class="section-content" id="storageInfo"></div>
+            </div>
+            
+            <div class="section">
+                <div class="section-header">Extension & Addon Detection</div>
+                <div class="section-content" id="extensionInfo"></div>
+            </div>
+            
+            <div class="section">
+                <div class="section-header">AdBlock Detection</div>
+                <div class="section-content" id="adblockInfo"></div>
+            </div>
+            
+            <div class="section">
+                <div class="section-header">System Identifiers</div>
+                <div class="section-content" id="systemIdInfo"></div>
+            </div>
+            
+            <div class="section">
+                <div class="section-header">Advanced Fingerprinting</div>
+                <div class="section-content" id="advancedInfo"></div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="button" onclick="location.reload()">Refresh Fingerprint</button>
+                <button class="button" onclick="exportData()">Export Data</button>
+            </div>
+        </div>
+    </div>
+    
+    <canvas id="canvas"></canvas>
+    
+    <script>
+        const fingerprintData = {};
+        
+        // Simple hash function
+        async function hashString(str) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(str);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        
+        function addItem(containerId, label, value) {
+            const container = document.getElementById(containerId);
+            const item = document.createElement('div');
+            item.className = 'fingerprint-item';
+            item.innerHTML = `
+                <div class="label">${label}:</div>
+                <div class="value">${value || 'Not available'}</div>
+            `;
+            container.appendChild(item);
+        }
+        
+        function addItemWithBadge(containerId, label, value, badgeType) {
+            const container = document.getElementById(containerId);
+            const item = document.createElement('div');
+            item.className = 'fingerprint-item';
+            const badges = {
+                'stable': '<span class="badge badge-stable">STABLE</span>',
+                'varies': '<span class="badge badge-varies">VARIES</span>',
+                'unique': '<span class="badge badge-unique">UNIQUE</span>'
+            };
+            item.innerHTML = `
+                <div class="label">${label}${badges[badgeType] || ''}:</div>
+                <div class="value">${value || 'Not available'}</div>
+            `;
+            container.appendChild(item);
+        }
+        
+        // Basic Browser Info
+        function collectBasicInfo() {
+            addItemWithBadge('basicInfo', 'User Agent', navigator.userAgent, 'stable');
+            addItemWithBadge('basicInfo', 'Platform', navigator.platform, 'stable');
+            addItemWithBadge('basicInfo', 'Language', navigator.language, 'varies');
+            addItemWithBadge('basicInfo', 'Languages', navigator.languages.join(', '), 'varies');
+            addItemWithBadge('basicInfo', 'Cookie Enabled', navigator.cookieEnabled, 'stable');
+            addItemWithBadge('basicInfo', 'Do Not Track', navigator.doNotTrack, 'stable');
+            addItemWithBadge('basicInfo', 'Timezone', Intl.DateTimeFormat().resolvedOptions().timeZone, 'varies');
+            addItemWithBadge('basicInfo', 'Timezone Offset', new Date().getTimezoneOffset(), 'varies');
+            addItemWithBadge('basicInfo', 'Browser Build ID', navigator.buildID || 'Not available', 'stable');
+            addItemWithBadge('basicInfo', 'App Version', navigator.appVersion, 'stable');
+            
+            fingerprintData.userAgent = navigator.userAgent;
+            fingerprintData.platform = navigator.platform;
+            fingerprintData.language = navigator.language;
+        }
+        
+        // Screen Info
+        function collectScreenInfo() {
+            addItemWithBadge('screenInfo', 'Screen Resolution', `${screen.width}x${screen.height}`, 'stable');
+            addItemWithBadge('screenInfo', 'Available Resolution', `${screen.availWidth}x${screen.availHeight}`, 'stable');
+            addItemWithBadge('screenInfo', 'Color Depth', `${screen.colorDepth} bits`, 'stable');
+            addItemWithBadge('screenInfo', 'Pixel Depth', `${screen.pixelDepth} bits`, 'stable');
+            addItemWithBadge('screenInfo', 'Device Pixel Ratio', window.devicePixelRatio, 'stable');
+            addItemWithBadge('screenInfo', 'Inner Dimensions', `${window.innerWidth}x${window.innerHeight}`, 'varies');
+            addItemWithBadge('screenInfo', 'Outer Dimensions', `${window.outerWidth}x${window.outerHeight}`, 'varies');
+            addItemWithBadge('screenInfo', 'Screen Orientation', screen.orientation ? screen.orientation.type : 'Unknown', 'varies');
+            
+            fingerprintData.screenResolution = `${screen.width}x${screen.height}`;
+            fingerprintData.colorDepth = screen.colorDepth;
+        }
+        
+        // Hardware Info
+        function collectHardwareInfo() {
+            addItemWithBadge('hardwareInfo', 'CPU Cores', navigator.hardwareConcurrency || 'Unknown', 'stable');
+            addItemWithBadge('hardwareInfo', 'Device Memory', navigator.deviceMemory ? `${navigator.deviceMemory} GB` : 'Unknown', 'stable');
+            addItemWithBadge('hardwareInfo', 'Max Touch Points', navigator.maxTouchPoints, 'stable');
+            addItemWithBadge('hardwareInfo', 'Vendor', navigator.vendor, 'stable');
+            addItemWithBadge('hardwareInfo', 'Product', navigator.product, 'stable');
+            addItemWithBadge('hardwareInfo', 'Product Sub', navigator.productSub, 'stable');
+            addItemWithBadge('hardwareInfo', 'Vendor Sub', navigator.vendorSub, 'stable');
+            
+            fingerprintData.hardwareConcurrency = navigator.hardwareConcurrency;
+            fingerprintData.deviceMemory = navigator.deviceMemory;
+        }
+        
+        // Network Info
+        function collectNetworkInfo() {
+            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            if (connection) {
+                addItemWithBadge('networkInfo', 'Effective Type', connection.effectiveType, 'varies');
+                addItemWithBadge('networkInfo', 'Downlink', `${connection.downlink} Mbps`, 'varies');
+                addItemWithBadge('networkInfo', 'RTT', `${connection.rtt} ms`, 'varies');
+                addItemWithBadge('networkInfo', 'Save Data', connection.saveData, 'varies');
+                fingerprintData.connectionType = connection.effectiveType;
+            } else {
+                addItemWithBadge('networkInfo', 'Connection API', 'Not supported', 'stable');
+            }
+            
+            addItemWithBadge('networkInfo', 'Online Status', navigator.onLine, 'varies');
+        }
+        
+        // Location & Geographic Data
+        async function collectLocationInfo() {
+            addItemWithBadge('locationInfo', 'Timezone', Intl.DateTimeFormat().resolvedOptions().timeZone, 'varies');
+            addItemWithBadge('locationInfo', 'Locale', navigator.language, 'varies');
+            addItemWithBadge('locationInfo', 'Date Format', new Intl.DateTimeFormat().format(new Date()), 'varies');
+            addItemWithBadge('locationInfo', 'Time Format', new Intl.DateTimeFormat(navigator.language, { 
+                hour: 'numeric', 
+                minute: 'numeric' 
+            }).format(new Date()), 'varies');
+            addItemWithBadge('locationInfo', 'Currency', new Intl.NumberFormat(navigator.language, {
+                style: 'currency',
+                currency: 'USD'
+            }).format(0).replace('0.00', '').replace('0', '').trim(), 'varies');
+            
+            // Geolocation (requires user permission)
+            if (navigator.geolocation) {
+                addItemWithBadge('locationInfo', 'Geolocation API', 'Supported (requires permission)', 'unique');
+                
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude.toFixed(4);
+                        const lon = position.coords.longitude.toFixed(4);
+                        document.querySelector('#locationInfo .value:last-child').textContent = 
+                            `Lat: ${lat}, Lon: ${lon} (Accuracy: ${position.coords.accuracy}m)`;
+                        fingerprintData.geolocation = `${lat},${lon}`;
+                    },
+                    () => {
+                        document.querySelector('#locationInfo .value:last-child').textContent = 
+                            'Permission denied or unavailable';
+                    },
+                    { timeout: 5000 }
+                );
+            } else {
+                addItemWithBadge('locationInfo', 'Geolocation API', 'Not supported', 'stable');
+            }
+            
+            fingerprintData.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        }
+        
+        // Audio Fingerprinting
+        async function collectAudioInfo() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) {
+                    const context = new AudioContext();
+                    const oscillator = context.createOscillator();
+                    const analyser = context.createAnalyser();
+                    const gainNode = context.createGain();
+                    const scriptProcessor = context.createScriptProcessor(4096, 1, 1);
+                    
+                    gainNode.gain.value = 0;
+                    oscillator.type = 'triangle';
+                    oscillator.connect(analyser);
+                    analyser.connect(scriptProcessor);
+                    scriptProcessor.connect(gainNode);
+                    gainNode.connect(context.destination);
+                    oscillator.start(0);
+                    
+                    const audioData = [];
+                    scriptProcessor.onaudioprocess = function(event) {
+                        const output = event.outputBuffer.getChannelData(0);
+                        for (let i = 0; i < output.length; i++) {
+                            audioData.push(output[i]);
+                        }
+                        if (audioData.length > 1000) {
+                            const sum = audioData.slice(0, 1000).reduce((a, b) => a + Math.abs(b), 0);
+                            const audioHash = sum.toFixed(10);
+                            addItemWithBadge('audioInfo', 'Audio Context Hash', audioHash, 'unique');
+                            fingerprintData.audioHash = audioHash;
+                            oscillator.stop();
+                            scriptProcessor.disconnect();
+                        }
+                    };
+                    
+                    addItemWithBadge('audioInfo', 'Audio Context Sample Rate', context.sampleRate, 'stable');
+                    addItemWithBadge('audioInfo', 'Audio Context State', context.state, 'varies');
+                    addItemWithBadge('audioInfo', 'Max Channel Count', context.destination.maxChannelCount, 'stable');
+                    addItemWithBadge('audioInfo', 'Number of Outputs', context.destination.numberOfOutputs, 'stable');
+                    addItemWithBadge('audioInfo', 'Channel Count Mode', context.destination.channelCountMode, 'stable');
+                    addItemWithBadge('audioInfo', 'Channel Interpretation', context.destination.channelInterpretation, 'stable');
+                    
+                    // Dynamics Compressor
+                    const compressor = context.createDynamicsCompressor();
+                    const compressorFingerprint = [
+                        compressor.threshold.value,
+                        compressor.knee.value,
+                        compressor.ratio.value,
+                        compressor.attack.value,
+                        compressor.release.value
+                    ].join(',');
+                    addItemWithBadge('audioInfo', 'Compressor Fingerprint', compressorFingerprint, 'unique');
+                    fingerprintData.audioCompressor = compressorFingerprint;
+                    
+                    setTimeout(() => {
+                        if (oscillator) oscillator.stop();
+                        if (context) context.close();
+                    }, 1000);
+                } else {
+                    addItemWithBadge('audioInfo', 'Audio Context', 'Not supported', 'stable');
+                }
+            } catch (e) {
+                addItemWithBadge('audioInfo', 'Audio Fingerprinting', 'Error: ' + e.message, 'varies');
+            }
+        }
+        
+        // Battery & Sensors
+        async function collectBatteryInfo() {
+            if (navigator.getBattery) {
+                try {
+                    const battery = await navigator.getBattery();
+                    addItemWithBadge('batteryInfo', 'Battery Level', `${(battery.level * 100).toFixed(0)}%`, 'unique');
+                    addItemWithBadge('batteryInfo', 'Battery Charging', battery.charging, 'unique');
+                    addItemWithBadge('batteryInfo', 'Charging Time', battery.chargingTime === Infinity ? 'Not charging' : `${battery.chargingTime}s`, 'unique');
+                    addItemWithBadge('batteryInfo', 'Discharging Time', battery.dischargingTime === Infinity ? 'Charging' : `${battery.dischargingTime}s`, 'unique');
+                } catch (e) {
+                    addItemWithBadge('batteryInfo', 'Battery API', 'Permission denied or error', 'varies');
+                }
+            } else {
+                addItemWithBadge('batteryInfo', 'Battery API', 'Not supported', 'stable');
+            }
+            
+            // Device Orientation
+            if (window.DeviceOrientationEvent) {
+                addItemWithBadge('batteryInfo', 'Device Orientation API', 'Supported', 'stable');
+            } else {
+                addItemWithBadge('batteryInfo', 'Device Orientation API', 'Not supported', 'stable');
+            }
+            
+            // Device Motion
+            if (window.DeviceMotionEvent) {
+                addItemWithBadge('batteryInfo', 'Device Motion API', 'Supported', 'stable');
+            } else {
+                addItemWithBadge('batteryInfo', 'Device Motion API', 'Not supported', 'stable');
+            }
+        }
+        
+        // Browser Features & APIs
+        function collectFeaturesInfo() {
+            const features = [
+                { name: 'WebGL', check: () => !!document.createElement('canvas').getContext('webgl'), badge: 'stable' },
+                { name: 'WebGL2', check: () => !!document.createElement('canvas').getContext('webgl2'), badge: 'stable' },
+                { name: 'WebRTC', check: () => !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia), badge: 'stable' },
+                { name: 'WebAssembly', check: () => typeof WebAssembly === 'object', badge: 'stable' },
+                { name: 'Service Worker', check: () => 'serviceWorker' in navigator, badge: 'stable' },
+                { name: 'Web Workers', check: () => typeof Worker !== 'undefined', badge: 'stable' },
+                { name: 'IndexedDB', check: () => !!window.indexedDB, badge: 'stable' },
+                { name: 'WebSQL', check: () => !!window.openDatabase, badge: 'stable' },
+                { name: 'Notifications', check: () => 'Notification' in window, badge: 'stable' },
+                { name: 'Push API', check: () => 'PushManager' in window, badge: 'stable' },
+                { name: 'Vibration API', check: () => 'vibrate' in navigator, badge: 'stable' },
+                { name: 'Bluetooth', check: () => 'bluetooth' in navigator, badge: 'stable' },
+                { name: 'USB', check: () => 'usb' in navigator, badge: 'stable' },
+                { name: 'WebXR', check: () => 'xr' in navigator, badge: 'stable' },
+                { name: 'Payment Request', check: () => 'PaymentRequest' in window, badge: 'stable' },
+                { name: 'Credential Management', check: () => 'credentials' in navigator, badge: 'stable' }
+            ];
+            
+            features.forEach(feature => {
+                addItemWithBadge('featuresInfo', feature.name, feature.check() ? 'Supported ✓' : 'Not supported ✗', feature.badge);
+            });
+            
+            fingerprintData.features = features.map(f => f.name + ':' + f.check()).join(',');
+        }
+        
+        // WebRTC & IP Detection
+        async function collectWebRTCInfo() {
+            addItemWithBadge('webrtcInfo', 'WebRTC Support', 'RTCPeerConnection' in window, 'stable');
+            
+            // Try to get local and public IPs via WebRTC
+            if ('RTCPeerConnection' in window || 'webkitRTCPeerConnection' in window || 'mozRTCPeerConnection' in window) {
+                try {
+                    const RTCPeerConnection = window.RTCPeerConnection || window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
+                    const pc = new RTCPeerConnection({
+                        iceServers: [
+                            {urls: 'stun:stun.l.google.com:19302'},
+                            {urls: 'stun:stun1.l.google.com:19302'}
+                        ]
+                    });
+                    
+                    const ips = new Set();
+                    
+                    pc.createDataChannel('');
+                    pc.createOffer().then(offer => pc.setLocalDescription(offer));
+                    
+                    pc.onicecandidate = (ice) => {
+                        if (!ice || !ice.candidate || !ice.candidate.candidate) return;
+                        
+                        const parts = ice.candidate.candidate.split(' ');
+                        const ip = parts[4];
+                        const type = parts[7];
+                        
+                        if (ip && type) {
+                            ips.add(`${ip} (${type})`);
+                            const ipList = Array.from(ips).join(', ');
+                            document.querySelectorAll('#webrtcInfo .value')[1].textContent = ipList;
+                            fingerprintData.webrtcIPs = ipList;
+                        }
+                    };
+                    
+                    addItemWithBadge('webrtcInfo', 'WebRTC IP Leak Test', 'Detecting...', 'unique');
+                    
+                    setTimeout(() => {
+                        pc.close();
+                        if (ips.size === 0) {
+                            document.querySelectorAll('#webrtcInfo .value')[1].textContent = 'No IPs detected or blocked';
+                        }
+                    }, 3000);
+                    
+                } catch (e) {
+                    addItemWithBadge('webrtcInfo', 'WebRTC IP Detection', 'Error: ' + e.message, 'varies');
+                }
+            } else {
+                addItemWithBadge('webrtcInfo', 'WebRTC', 'Not supported', 'stable');
+            }
+            
+            // Media Devices via WebRTC
+            if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+                try {
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    const deviceIds = devices.map(d => d.deviceId.substring(0, 20) + '...').join(', ');
+                    addItemWithBadge('webrtcInfo', 'Media Device IDs', deviceIds, 'unique');
+                    fingerprintData.mediaDeviceIds = deviceIds;
+                } catch (e) {
+                    addItemWithBadge('webrtcInfo', 'Media Device IDs', 'Permission required', 'varies');
+                }
+            }
+        }
+        
+        // Client Hints & HTTP Headers
+        async function collectClientHintsInfo() {
+            // User-Agent Client Hints (new API)
+            if (navigator.userAgentData) {
+                addItemWithBadge('clientHintsInfo', 'UA Brands', JSON.stringify(navigator.userAgentData.brands), 'stable');
+                addItemWithBadge('clientHintsInfo', 'UA Mobile', navigator.userAgentData.mobile, 'stable');
+                addItemWithBadge('clientHintsInfo', 'UA Platform', navigator.userAgentData.platform, 'stable');
+                
+                try {
+                    const highEntropyValues = await navigator.userAgentData.getHighEntropyValues([
+                        'architecture',
+                        'model',
+                        'platformVersion',
+                        'uaFullVersion',
+                        'bitness',
+                        'fullVersionList'
+                    ]);
+                    
+                    addItemWithBadge('clientHintsInfo', 'Architecture', highEntropyValues.architecture, 'stable');
+                    addItemWithBadge('clientHintsInfo', 'Model', highEntropyValues.model || 'Not available', 'stable');
+                    addItemWithBadge('clientHintsInfo', 'Platform Version', highEntropyValues.platformVersion, 'stable');
+                    addItemWithBadge('clientHintsInfo', 'Full Version', highEntropyValues.uaFullVersion, 'stable');
+                    addItemWithBadge('clientHintsInfo', 'Bitness', highEntropyValues.bitness, 'stable');
+                    
+                    fingerprintData.clientHints = JSON.stringify(highEntropyValues);
+                } catch (e) {
+                    addItemWithBadge('clientHintsInfo', 'High Entropy Hints', 'Not available', 'stable');
+                }
+            } else {
+                addItemWithBadge('clientHintsInfo', 'User-Agent Client Hints', 'Not supported (Legacy browser)', 'stable');
+            }
+            
+            // Check for prefersReducedMotion
+            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            addItemWithBadge('clientHintsInfo', 'Prefers Reduced Motion', prefersReducedMotion, 'varies');
+            
+            // Check for color scheme preference
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            addItemWithBadge('clientHintsInfo', 'Prefers Dark Mode', prefersDark, 'varies');
+            
+            // Check for contrast preference
+            const prefersHighContrast = window.matchMedia('(prefers-contrast: high)').matches;
+            addItemWithBadge('clientHintsInfo', 'Prefers High Contrast', prefersHighContrast, 'varies');
+        }
+        
+        // Performance & Timing
+        function collectPerformanceInfo() {
+            if (window.performance) {
+                // Navigation timing
+                if (window.performance.timing) {
+                    const timing = window.performance.timing;
+                    const navStart = timing.navigationStart;
+                    
+                    addItemWithBadge('performanceInfo', 'DNS Lookup Time', `${timing.domainLookupEnd - timing.domainLookupStart}ms`, 'varies');
+                    addItemWithBadge('performanceInfo', 'TCP Connect Time', `${timing.connectEnd - timing.connectStart}ms`, 'varies');
+                    addItemWithBadge('performanceInfo', 'Request Time', `${timing.responseStart - timing.requestStart}ms`, 'varies');
+                    addItemWithBadge('performanceInfo', 'Response Time', `${timing.responseEnd - timing.responseStart}ms`, 'varies');
+                    addItemWithBadge('performanceInfo', 'DOM Processing', `${timing.domComplete - timing.domLoading}ms`, 'varies');
+                }
+                
+                // Memory (Chrome only)
+                if (performance.memory) {
+                    addItemWithBadge('performanceInfo', 'JS Heap Size Limit', `${(performance.memory.jsHeapSizeLimit / 1048576).toFixed(2)} MB`, 'stable');
+                    addItemWithBadge('performanceInfo', 'Total JS Heap Size', `${(performance.memory.totalJSHeapSize / 1048576).toFixed(2)} MB`, 'varies');
+                    addItemWithBadge('performanceInfo', 'Used JS Heap Size', `${(performance.memory.usedJSHeapSize / 1048576).toFixed(2)} MB`, 'varies');
+                    fingerprintData.heapLimit = performance.memory.jsHeapSizeLimit;
+                }
+                
+                // Performance entries
+                const entries = performance.getEntriesByType('navigation');
+                if (entries.length > 0) {
+                    const nav = entries[0];
+                    addItemWithBadge('performanceInfo', 'Navigation Type', nav.type, 'varies');
+                    addItemWithBadge('performanceInfo', 'Redirect Count', nav.redirectCount, 'varies');
+                }
+            }
+            
+            // Estimate rendering performance
+            let frameCount = 0;
+            let lastTime = performance.now();
+            
+            function countFrames() {
+                frameCount++;
+                const currentTime = performance.now();
+                if (currentTime - lastTime >= 1000) {
+                    addItemWithBadge('performanceInfo', 'Approx. FPS', frameCount, 'varies');
+                    fingerprintData.fps = frameCount;
+                    return;
+                }
+                requestAnimationFrame(countFrames);
+            }
+            requestAnimationFrame(countFrames);
+        }
+        
+        // Storage & Quota Detection
+        async function collectStorageInfo() {
+            // Local Storage size test
+            if (typeof(Storage) !== "undefined") {
+                try {
+                    const testKey = '__storage_test__';
+                    let i = 0;
+                    const data = '0123456789';
+                    let testData = data;
+                    
+                    // Try to estimate storage
+                    addItemWithBadge('storageInfo', 'Local Storage Available', 'Yes', 'stable');
+                    
+                    // Test current usage
+                    let totalSize = 0;
+                    for (let key in localStorage) {
+                        if (localStorage.hasOwnProperty(key)) {
+                            totalSize += localStorage[key].length + key.length;
+                        }
+                    }
+                    addItemWithBadge('storageInfo', 'Local Storage Used', `~${(totalSize / 1024).toFixed(2)} KB`, 'varies');
+                } catch (e) {
+                    addItemWithBadge('storageInfo', 'Local Storage', 'Access denied', 'varies');
+                }
+            } else {
+                addItemWithBadge('storageInfo', 'Local Storage', 'Not supported', 'stable');
+            }
+            
+            // Storage Quota API
+            if (navigator.storage && navigator.storage.estimate) {
+                try {
+                    const estimate = await navigator.storage.estimate();
+                    addItemWithBadge('storageInfo', 'Storage Quota', `${(estimate.quota / 1024 / 1024 / 1024).toFixed(2)} GB`, 'stable');
+                    addItemWithBadge('storageInfo', 'Storage Usage', `${(estimate.usage / 1024 / 1024).toFixed(2)} MB`, 'varies');
+                    addItemWithBadge('storageInfo', 'Storage Percentage', `${((estimate.usage / estimate.quota) * 100).toFixed(2)}%`, 'varies');
+                    fingerprintData.storageQuota = estimate.quota;
+                } catch (e) {
+                    addItemWithBadge('storageInfo', 'Storage Estimate', 'Not available', 'stable');
+                }
+            }
+            
+            // IndexedDB quota
+            if (window.indexedDB) {
+                addItemWithBadge('storageInfo', 'IndexedDB', 'Supported', 'stable');
+            }
+            
+            // Cookie test
+            document.cookie = "testcookie=1; SameSite=Lax";
+            const cookieEnabled = document.cookie.indexOf("testcookie") !== -1;
+            addItemWithBadge('storageInfo', 'Cookies Enabled', cookieEnabled, 'varies');
+            document.cookie = "testcookie=1; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            
+            // Session Storage
+            if (typeof(sessionStorage) !== "undefined") {
+                addItemWithBadge('storageInfo', 'Session Storage', 'Supported', 'stable');
+            }
+        }
+        
+        // Extension & Addon Detection
+        async function collectExtensionInfo() {
+            addItemWithBadge('extensionInfo', 'Note', 'Extension detection is limited for privacy', 'stable');
+            
+            // Chrome extensions often inject scripts
+            const hasExtensionSignature = !!(
+                document.documentElement.getAttribute('chrome') ||
+                document.documentElement.getAttribute('moz-extension') ||
+                window.chrome?.runtime
+            );
+            addItemWithBadge('extensionInfo', 'Extension Signature', hasExtensionSignature ? 'Detected' : 'None', 'varies');
+            
+            // Check for common extension DOM modifications
+            const commonExtensionIds = [
+                '__react-tooltip', // React dev tools
+                '__REACT_DEVTOOLS_GLOBAL_HOOK__',
+                '__REDUX_DEVTOOLS_EXTENSION__',
+                '__VUE_DEVTOOLS_GLOBAL_HOOK__'
+            ];
+            
+            const detectedExtensionHooks = [];
+            commonExtensionIds.forEach(id => {
+                if (window[id] || document.getElementById(id)) {
+                    detectedExtensionHooks.push(id);
+                }
+            });
+            
+            if (detectedExtensionHooks.length > 0) {
+                addItemWithBadge('extensionInfo', 'Dev Tools Detected', detectedExtensionHooks.join(', '), 'varies');
+            }
+            
+            // Check for Web Accessible Resources (Chrome extensions)
+            const extensionTests = [
+                'chrome-extension://invalid/test.js',
+                'moz-extension://invalid/test.js'
+            ];
+            
+            addItemWithBadge('extensionInfo', 'Browser Extensions', 'Cannot enumerate for privacy', 'varies');
+            
+            // Detect automation/headless browsers
+            const automationFlags = [];
+            if (navigator.webdriver) automationFlags.push('WebDriver');
+            if (window.callPhantom || window._phantom) automationFlags.push('PhantomJS');
+            if (window.Buffer) automationFlags.push('NodeJS/Buffer');
+            if (navigator.plugins.length === 0) automationFlags.push('No Plugins');
+            
+            addItemWithBadge('extensionInfo', 'Automation Detected', automationFlags.length > 0 ? automationFlags.join(', ') : 'None', 'varies');
+            fingerprintData.automation = automationFlags.join(',');
+        }
+        
+        // AdBlock Detection
+        async function collectAdBlockInfo() {
+            // Test 1: DOM-based detection
+            const adTest = document.createElement('div');
+            adTest.innerHTML = '&nbsp;';
+            adTest.className = 'adsbox ad-placement advertisement';
+            adTest.style.position = 'absolute';
+            adTest.style.top = '-1px';
+            adTest.style.left = '-1px';
+            document.body.appendChild(adTest);
+            
+            setTimeout(() => {
+                const isBlocked1 = adTest.offsetHeight === 0 || adTest.offsetWidth === 0;
+                addItemWithBadge('adblockInfo', 'DOM-based Detection', isBlocked1 ? 'AdBlock Detected' : 'Not Detected', 'varies');
+                document.body.removeChild(adTest);
+            }, 100);
+            
+            // Test 2: Check for common adblocker properties
+            const adBlockSignatures = [];
+            
+            if (typeof window.adsbygoogle === 'undefined') {
+                adBlockSignatures.push('AdSense blocked');
+            }
+            
+            // Check for uBlock Origin
+            if (document.getElementById('uBlock0')) {
+                adBlockSignatures.push('uBlock Origin');
+            }
+            
+            // Check for AdBlock Plus
+            if (document.getElementById('abp-elemhide-stylesheet')) {
+                adBlockSignatures.push('AdBlock Plus');
+            }
+            
+            addItemWithBadge('adblockInfo', 'Specific AdBlockers', adBlockSignatures.length > 0 ? adBlockSignatures.join(', ') : 'None detected', 'varies');
+            
+            // Test 3: Resource loading test
+            const baitLink = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
+            addItemWithBadge('adblockInfo', 'Resource Blocking Test', 'Testing...', 'varies');
+            
+            fetch(baitLink, { method: 'HEAD', mode: 'no-cors' })
+                .then(() => {
+                    const elements = document.querySelectorAll('#adblockInfo .value');
+                    elements[elements.length - 1].textContent = 'Ads not blocked';
+                })
+                .catch(() => {
+                    const elements = document.querySelectorAll('#adblockInfo .value');
+                    elements[elements.length - 1].textContent = 'Ads blocked (AdBlock active)';
+                });
+            
+            // Test 4: Check for privacy extensions
+            const privacyExtensions = [];
+            
+            // Check if requests are being modified
+            const hasDoNotTrack = navigator.doNotTrack === '1' || navigator.doNotTrack === 'yes';
+            if (hasDoNotTrack) privacyExtensions.push('Do Not Track enabled');
+            
+            const hasGlobalPrivacyControl = navigator.globalPrivacyControl === true;
+            if (hasGlobalPrivacyControl) privacyExtensions.push('Global Privacy Control');
+            
+            addItemWithBadge('adblockInfo', 'Privacy Settings', privacyExtensions.length > 0 ? privacyExtensions.join(', ') : 'None', 'varies');
+            
+            fingerprintData.adBlockDetected = adBlockSignatures.length > 0;
+        }
+        
+        // System Identifiers
+        async function collectSystemIdInfo() {
+            addItemWithBadge('systemIdInfo', 'Note', 'MAC address & true UUID not accessible from browser for security', 'stable');
+            
+            // Generate pseudo-UUID based on fingerprint components
+            const components = [
+                navigator.userAgent,
+                navigator.platform,
+                screen.width + 'x' + screen.height,
+                screen.colorDepth,
+                navigator.hardwareConcurrency || 0,
+                new Date().getTimezoneOffset(),
+                navigator.language
+            ].join('|||');
+            
+            const pseudoUUID = await hashString(components);
+            addItemWithBadge('systemIdInfo', 'Pseudo-UUID (Fingerprint)', pseudoUUID.substring(0, 36), 'unique');
+            fingerprintData.pseudoUUID = pseudoUUID;
+            
+            // Browser-generated identifiers
+            if (window.crypto && window.crypto.randomUUID) {
+                const randomUUID = crypto.randomUUID();
+                addItemWithBadge('systemIdInfo', 'Random Session UUID', randomUUID, 'varies');
+            }
+            
+            // System architecture
+            const arch = navigator.userAgentData?.platform || navigator.platform;
+            addItemWithBadge('systemIdInfo', 'System Architecture', arch, 'stable');
+            
+            // MAC Address note
+            addItemWithBadge('systemIdInfo', 'MAC Address', 'Not accessible (browser security)', 'stable');
+            addItemWithBadge('systemIdInfo', 'Network Interfaces', 'Not accessible (browser security)', 'stable');
+            
+            // Hardware UUID attempts (mostly unavailable)
+            addItemWithBadge('systemIdInfo', 'Hardware UUID', 'Not accessible from web browser', 'stable');
+            
+            // Canvas-based device identifier
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 200;
+            canvas.height = 50;
+            ctx.textBaseline = 'top';
+            ctx.font = '14px Arial';
+            ctx.fillStyle = '#f60';
+            ctx.fillRect(0, 0, 200, 50);
+            ctx.fillStyle = '#069';
+            ctx.fillText('Device ID: ' + navigator.hardwareConcurrency, 2, 15);
+            
+            const canvasDeviceId = await hashString(canvas.toDataURL());
+            addItemWithBadge('systemIdInfo', 'Canvas-based Device ID', canvasDeviceId.substring(0, 32), 'unique');
+            fingerprintData.canvasDeviceId = canvasDeviceId;
+        }
+        
+        // Canvas Fingerprinting
+        function getCanvasFingerprint() {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = 200;
+            canvas.height = 50;
+            
+            ctx.textBaseline = 'top';
+            ctx.font = '14px Arial';
+            ctx.textBaseline = 'alphabetic';
+            ctx.fillStyle = '#f60';
+            ctx.fillRect(125, 1, 62, 20);
+            ctx.fillStyle = '#069';
+            ctx.fillText('Canvas Fingerprint', 2, 15);
+            ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
+            ctx.fillText('Canvas Fingerprint', 4, 17);
+            
+            return canvas.toDataURL();
+        }
+        
+        // WebGL Fingerprinting
+        function getWebGLFingerprint() {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            
+            if (!gl) return 'Not supported';
+            
+            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            return {
+                vendor: debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : 'Unknown',
+                renderer: debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'Unknown'
+            };
+        }
+        
+        // Font Detection
+        function detectFonts() {
+            const baseFonts = ['monospace', 'sans-serif', 'serif'];
+            const testFonts = [
+                'Arial', 'Verdana', 'Times New Roman', 'Courier New', 'Georgia', 'Palatino',
+                'Garamond', 'Bookman', 'Comic Sans MS', 'Trebuchet MS', 'Impact', 'Arial Black',
+                'Helvetica', 'Tahoma', 'Lucida Console', 'Monaco', 'Consolas', 'Courier',
+                'Century Gothic', 'Calibri', 'Cambria', 'Candara', 'Franklin Gothic',
+                'Microsoft Sans Serif', 'MS Gothic', 'MS Mincho', 'SimSun', 'SimHei',
+                'Malgun Gothic', 'Batang', 'Dotum', 'Gulim', 'AppleGothic', 'Apple SD Gothic Neo'
+            ];
+            const detectedFonts = [];
+            
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            const testString = "mmmmmmmmmmlli";
+            const testSize = "72px";
+            
+            const baselines = {};
+            baseFonts.forEach(baseFont => {
+                ctx.font = `${testSize} ${baseFont}`;
+                baselines[baseFont] = ctx.measureText(testString).width;
+            });
+            
+            testFonts.forEach(testFont => {
+                let detected = false;
+                baseFonts.forEach(baseFont => {
+                    ctx.font = `${testSize} '${testFont}', ${baseFont}`;
+                    const testWidth = ctx.measureText(testString).width;
+                    if (testWidth !== baselines[baseFont]) {
+                        detected = true;
+                    }
+                });
+                if (detected) {
+                    detectedFonts.push(testFont);
+                }
+            });
+            
+            return detectedFonts;
+        }
+        
+        // Enhanced Font Fingerprinting with more details
+        async function collectFontFingerprint() {
+            const fonts = detectFonts();
+            const fontHash = await hashString(fonts.join(','));
+            
+            addItemWithBadge('advancedInfo', 'Total Fonts Detected', fonts.length, 'stable');
+            addItemWithBadge('advancedInfo', 'Font List Hash', fontHash.substring(0, 32) + '...', 'stable');
+            addItemWithBadge('advancedInfo', 'Detected Font Names', fonts.join(', '), 'stable');
+            
+            fingerprintData.fontsDetected = fonts.length;
+            fingerprintData.fontHash = fontHash;
+            
+            return fonts;
+        }
+        
+        // Advanced Info
+        async function collectAdvancedInfo() {
+            const canvasHash = await hashString(getCanvasFingerprint());
+            addItemWithBadge('advancedInfo', 'Canvas Hash', canvasHash.substring(0, 32) + '...', 'unique');
+            fingerprintData.canvasHash = canvasHash;
+            
+            const webgl = getWebGLFingerprint();
+            addItemWithBadge('advancedInfo', 'WebGL Vendor', webgl.vendor, 'stable');
+            addItemWithBadge('advancedInfo', 'WebGL Renderer', webgl.renderer, 'unique');
+            fingerprintData.webglVendor = webgl.vendor;
+            
+            const fonts = detectFonts();
+            addItemWithBadge('advancedInfo', 'Detected Fonts', fonts.join(', '), 'stable');
+            fingerprintData.fonts = fonts.join(',');
+            
+            addItemWithBadge('advancedInfo', 'Plugins Count', navigator.plugins.length, 'stable');
+            
+            // List all plugins
+            const pluginNames = [];
+            for (let i = 0; i < navigator.plugins.length; i++) {
+                pluginNames.push(navigator.plugins[i].name);
+            }
+            if (pluginNames.length > 0) {
+                addItemWithBadge('advancedInfo', 'Plugin Names', pluginNames.join(', '), 'stable');
+            }
+            
+            addItemWithBadge('advancedInfo', 'Local Storage', typeof(Storage) !== "undefined", 'stable');
+            addItemWithBadge('advancedInfo', 'Session Storage', typeof(sessionStorage) !== "undefined", 'stable');
+            addItemWithBadge('advancedInfo', 'IndexedDB', !!window.indexedDB, 'stable');
+            
+            // HTTP Headers (approximate)
+            addItemWithBadge('advancedInfo', 'Referrer', document.referrer || 'Direct', 'varies');
+            
+            // Math precision test
+            const mathTest = Math.tan(1e-16);
+            addItemWithBadge('advancedInfo', 'Math.tan Precision', mathTest.toString(), 'stable');
+            
+            // Error stack trace format
+            try {
+                throw new Error('test');
+            } catch (e) {
+                const stackFormat = e.stack ? e.stack.split('\n')[0].substring(0, 30) : 'Not available';
+                addItemWithBadge('advancedInfo', 'Stack Trace Format', stackFormat, 'stable');
+            }
+            
+            // Rendering engine quirks
+            const div = document.createElement('div');
+            div.innerHTML = '<p>test</p>';
+            const quirk = div.childNodes.length;
+            addItemWithBadge('advancedInfo', 'DOM Quirk Test', quirk, 'stable');
+            
+            // CSS property support
+            const supports3D = 'WebKitCSSMatrix' in window || 'MSCSSMatrix' in window;
+            addItemWithBadge('advancedInfo', '3D CSS Transforms', supports3D, 'stable');
+            
+            // WebP support detection
+            const webpSupport = document.createElement('canvas').toDataURL('image/webp').indexOf('data:image/webp') === 0;
+            addItemWithBadge('advancedInfo', 'WebP Support', webpSupport, 'stable');
+            
+            // Speech Synthesis
+            const speechSynthesis = 'speechSynthesis' in window;
+            addItemWithBadge('advancedInfo', 'Speech Synthesis', speechSynthesis, 'stable');
+            if (speechSynthesis && window.speechSynthesis) {
+                const voices = window.speechSynthesis.getVoices();
+                if (voices.length > 0) {
+                    addItemWithBadge('advancedInfo', 'Speech Voices Count', voices.length, 'stable');
+                }
+            }
+            
+            // Keyboard layout detection
+            addItemWithBadge('advancedInfo', 'Keyboard Layout', navigator.keyboard ? 'API Available' : 'Not available', 'varies');
+            
+            // PDF viewer
+            const hasPDFViewer = navigator.mimeTypes && navigator.mimeTypes['application/pdf'];
+            addItemWithBadge('advancedInfo', 'PDF Viewer', hasPDFViewer ? 'Yes' : 'No', 'stable');
+            
+            // Ad blocker detection
+            const adBlockTest = document.createElement('div');
+            adBlockTest.innerHTML = '&nbsp;';
+            adBlockTest.className = 'adsbox';
+            document.body.appendChild(adBlockTest);
+            setTimeout(() => {
+                const hasAdBlocker = adBlockTest.offsetHeight === 0;
+                addItemWithBadge('advancedInfo', 'Ad Blocker Detected', hasAdBlocker, 'varies');
+                document.body.removeChild(adBlockTest);
+            }, 100);
+            
+            // Protocol handlers
+            const protocols = ['mailto', 'tel', 'sms'];
+            const supportedProtocols = [];
+            protocols.forEach(protocol => {
+                try {
+                    if (navigator.registerProtocolHandler) {
+                        supportedProtocols.push(protocol);
+                    }
+                } catch (e) {}
+            });
+            addItemWithBadge('advancedInfo', 'Protocol Handlers', supportedProtocols.length > 0 ? supportedProtocols.join(', ') : 'None', 'stable');
+        }
+        
+        // Generate final fingerprint
+        async function generateFingerprint() {
+            const fingerprintString = JSON.stringify(fingerprintData);
+            const hash = await hashString(fingerprintString);
+            document.getElementById('fingerprintHash').textContent = hash;
+            fingerprintData.finalHash = hash;
+        }
+        
+        // Export function
+        function exportData() {
+            const dataStr = JSON.stringify(fingerprintData, null, 2);
+            const blob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'browser-fingerprint.json';
+            a.click();
+        }
+        
+        // Initialize
+        async function init() {
+            collectBasicInfo();
+            collectScreenInfo();
+            collectHardwareInfo();
+            collectNetworkInfo();
+            await collectLocationInfo();
+            await collectAudioInfo();
+            await collectBatteryInfo();
+            collectFeaturesInfo();
+            await collectWebRTCInfo();
+            await collectClientHintsInfo();
+            collectPerformanceInfo();
+            await collectStorageInfo();
+            await collectExtensionInfo();
+            await collectAdBlockInfo();
+            await collectSystemIdInfo();
+            await collectAdvancedInfo();
+            await generateFingerprint();
+        }
+        
+        init();
+    </script>
+</body>
+</html>
